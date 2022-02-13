@@ -59,39 +59,23 @@ MACHINES.each do |boxname, boxconfig|
         vb.customize ["modifyvm", :id, "--memory", "1024"]
         needsController = false
         boxconfig[:disks].each do |dname, dconf|
-        unless File.exist?(dconf[:dfile])
-        vb.customize ['createhd', '--filename', dconf[:dfile],
-        '--variant', 'Fixed', '--size', dconf[:size]]
-        needsController = true
-    end
-end
+                unless File.exist?(dconf[:dfile])
+                vb.customize ['createhd', '--filename', dconf[:dfile],
+                '--variant', 'Fixed', '--size', dconf[:size]]
+                needsController = true
+                end
+        end
         if needsController == true
         vb.customize ["storagectl", :id, "--name", "SATA",
         "--add", "sata" ]
-        boxconfig[:disks].each do |dname, dconf|
-        vb.customize ['storageattach', :id, '--storagectl',
-        'SATA', '--port', dconf[:port], '--device', 0, '--type', 'hdd',
-        '--medium', dconf[:dfile]]
-        end
+                boxconfig[:disks].each do |dname, dconf|
+                vb.customize ['storageattach', :id, '--storagectl',
+                'SATA', '--port', dconf[:port], '--device', 0, '--type', 'hdd',
+                '--medium', dconf[:dfile]]
+                end
     end
 end
-        box.vm.provision "shell", inline: <<-SHELL
-            #install zfs repo
-            yum install -y
-            http://download.zfsonlinux.org/epel/zfs-release.el7_8.noarch.rpm
-            #import gpg key
-            rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux
-            #install DKMS style packages for correct work ZFS
-            yum install -y epel-release kernel-devel zfs
-            #change ZFS repo
-            yum-config-manager --disable zfs
-            yum-config-manager --enable zfs-kmod
-            yum install -y zfs
-            #Add kernel module zfs
-            modprobe zfs
-            #install wget
-            yum install -y wget
-            SHELL
+        box.vm.provision "shell", path: "script.sh"
         end
 end
 end
